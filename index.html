@@ -1,0 +1,270 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>ROVER</title>
+  <meta name="description" content="ROVER">
+  
+
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+	video#bgvid { 
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -100;
+    -ms-transform: translateX(-50%) translateY(-50%);
+    -moz-transform: translateX(-50%) translateY(-50%);
+    -webkit-transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(-50%);
+    background: url(backVid.mp4) no-repeat;
+    background-size: cover; 
+}
+	#gmap_canvas img{
+	z-index:0;
+	max-width:none!important;
+	background:none!important;
+	position:fixed;
+	top:50%;
+	left:50%;
+	
+	}
+	
+	#mapdiv {
+	margin: 0;
+	padding: 0;
+	width:640px;
+	height: 480px;
+}
+	
+//clock code starts here
+ @font-face {
+    font-family: 'BebasNeueRegular';
+    src: url('BebasNeue-webfont.eot');
+    src: url('BebasNeue-webfont.eot?#iefix') format('embedded-opentype'),
+         url('BebasNeue-webfont.woff') format('woff'),
+         url('BebasNeue-webfont.ttf') format('truetype'),
+         url('BebasNeue-webfont.svg#BebasNeueRegular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+.container {width: 960px; margin: 0 auto; overflow: hidden;}
+
+.clock {width:800px; margin:0 auto; padding:30px; border:0px solid #333; color:#fff; }
+
+#Date { font-family:'BebasNeueRegular', Arial, Helvetica, sans-serif; font-size:36px; text-align:center; text-shadow:0 0 5px #00c6ff; }
+
+ul { width:800px; margin:0 auto; padding:0px; list-style:none; text-align:center; }
+ul li { display:inline; font-size:10em; text-align:center; font-family:'BebasNeueRegular', Arial, Helvetica, sans-serif; text-shadow:0 0 5px #00c6ff; }
+
+#point { position:relative; -moz-animation:mymove 1s ease infinite; -webkit-animation:mymove 1s ease infinite; padding-left:10px; padding-right:10px; }
+
+@-webkit-keyframes mymove 
+{
+0% {opacity:1.0; text-shadow:0 0 20px #00c6ff;}
+50% {opacity:0; text-shadow:none; }
+100% {opacity:1.0; text-shadow:0 0 20px #00c6ff; }	
+}
+
+
+@-moz-keyframes mymove 
+{
+0% {opacity:1.0; text-shadow:0 0 20px #00c6ff;}
+50% {opacity:0; text-shadow:none; }
+100% {opacity:1.0; text-shadow:0 0 20px #00c6ff; }	
+}
+
+</style>
+<!--this is needed for phonegap-->
+<script src="phonegap.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+// Create two variable with the names of the months and days in an array
+var monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]; 
+var dayNames= ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"]
+
+// Create a newDate() object
+var newDate = new Date();
+// Extract the current date from Date object
+newDate.setDate(newDate.getDate());
+// Output the day, date, month and year    
+$('#Date').html(dayNames[newDate.getDay()] + " " + newDate.getDate() + ' ' + monthNames[newDate.getMonth()] + ' ' + newDate.getFullYear());
+
+setInterval( function() {
+	// Create a newDate() object and extract the seconds of the current time on the visitor's
+	var seconds = new Date().getSeconds();
+	// Add a leading zero to seconds value
+	$("#sec").html(( seconds < 10 ? "0" : "" ) + seconds);
+	},1000);
+	
+setInterval( function() {
+	// Create a newDate() object and extract the minutes of the current time on the visitor's
+	var minutes = new Date().getMinutes();
+	// Add a leading zero to the minutes value
+	$("#min").html(( minutes < 10 ? "0" : "" ) + minutes);
+    },1000);
+	
+setInterval( function() {
+	// Create a newDate() object and extract the hours of the current time on the visitor's
+	var hours = new Date().getHours();
+	// Add a leading zero to the hours value
+	$("#hours").html(( hours < 10 ? "0" : "" ) + hours);
+    }, 1000);
+	
+}); 
+</script>
+  
+  <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>
+<script>
+	var watchId = null;
+	function geoloc() {
+	if (navigator.geolocation) {
+		var optn = {
+				enableHighAccuracy : true,
+				timeout : Infinity,
+				maximumAge : 0
+		};
+	watchId = navigator.geolocation.watchPosition(showPosition, showError, optn);
+	} else {
+			alert('Geolocation is not supported in your browser');
+	}
+	}
+
+function showPosition(position) {
+		var googlePos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+		var mapOptions = {
+			zoom : 20,
+			center : googlePos,
+			mapTypeId : google.maps.MapTypeId.HYBRID
+		};
+		var mapObj = document.getElementById('mapdiv');
+		var googleMap = new google.maps.Map(mapObj, mapOptions);
+		var markerOpt = {
+			map : googleMap,
+			position : googlePos,
+			title : 'Hi , I am here',
+			animation : google.maps.Animation.DROP
+		};
+		var googleMarker = new google.maps.Marker(markerOpt);
+		var geocoder = new google.maps.Geocoder();
+		geocoder.geocode({
+			'latLng' : googlePos
+			}, function(results, status) {
+				if (status == google.maps.GeocoderStatus.OK) {
+				if (results[1]) {
+					var popOpts = {
+						content : results[1].formatted_address,
+						position : googlePos
+					};
+				var popup = new google.maps.InfoWindow(popOpts);
+				google.maps.event.addListener(googleMarker, 'click', function() {
+				popup.open(googleMap);
+			});
+				} else {
+					alert('No results found');
+				}
+				} else {
+					alert('Geocoder failed due to: ' + status);
+				}
+			});
+			}
+
+			function stopWatch() {
+				if (watchId) {
+					navigator.geolocation.clearWatch(watchId);
+					watchId = null;
+
+				}
+			}
+
+		function showError(error) {
+		var err = document.getElementById('mapdiv');
+		switch(error.code) {
+		case error.PERMISSION_DENIED:
+		err.innerHTML = "User denied the request for Geolocation."
+		break;
+		case error.POSITION_UNAVAILABLE:
+		err.innerHTML = "Location information is unavailable."
+		break;
+		case error.TIMEOUT:
+		err.innerHTML = "The request to get user location timed out."
+		break;
+		case error.UNKNOWN_ERROR:
+		err.innerHTML = "An unknown error occurred."
+		break;
+		}
+		}
+		</script>
+
+
+  <!--[if lt IE 9]>
+    <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+
+<body onload="geoloc()">
+<!--clock html-->
+<div class="container">
+<div class="clock">
+<div id="Date"></div>
+
+<ul>
+	<li id="hours"> </li>
+    <li id="point">:</li>
+    <li id="min"> </li>
+    <li id="point">:</li>
+    <li id="sec"> </li>
+</ul>
+
+</div>
+</div>
+<!--end of clock code-->
+<p id = 'mapdiv'></p>
+  <script src="js/scripts.js"></script>
+  
+  <!--google maps
+  <script src="//maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>
+--> 
+  
+  <!--video background-->
+  <video autoplay loop poster="backVid.mp4" id="bgvid">
+   <!--<source src="polina.webm" type="video/webm">-->
+    <source src="backVid.mp4" type="video/mp4">
+</video>
+
+
+
+		
+<!--<script src='https://maps.googleapis.com/maps/api/js?v=3.exp'></script>
+<div style='overflow:hidden;height:480pxpx;width:640px;'><div id='gmap_canvas' style='height:480px;width:640px;'></div>
+<style></style></div>
+
+<script type='text/javascript'>function init_map(){
+var myOptions = {zoom:15,center:new google.maps.LatLng(30.4382559,-84.28073289999998),mapTypeId: google.maps.MapTypeId.HYBRID};
+map = new google.maps.Map(document.getElementById('gmap_canvas'), myOptions);marker = new google.maps.Marker({map: map,position: new google.maps.LatLng(30.4382559,-84.28073289999998)});
+
+infowindow = new google.maps.InfoWindow({content:'<br>ROVER<br>'});google.maps.event.addListener(marker, 'click', function(){infowindow.open(map,marker);});infowindow.open(map,marker);}google.maps.event.addDomListener(window, 'load', init_map);
+
+
+</script>
+-->
+<!--this is the webcam stream from vlc-->
+<embed type="application/x-vlc-plugin" pluginspage="http://www.videolan.org" version="VideoLAN.VLCPlugin.2" height=”480” width=”640" id="vlc" loop="yes" autoplay="yes" target="dshow://"></embed>
+
+
+
+</body>
+</html>
+
+
+
+
